@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   mongo:
     image: mongo:7
@@ -21,9 +19,6 @@ services:
       - .env
     environment:
       - MONGODB_URI=mongodb://mongo:27017/spedevdb
-      - JWT_SECRET=superSecretChiffre123 # Enlever cette ligne et ajouter la variable
-        # d'environnement dans le fichier .env a la racine du projet
-        # (voir le fichier .env.example)
     depends_on:
       - mongo
 
