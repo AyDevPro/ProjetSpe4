@@ -1,18 +1,19 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function Logout() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   useEffect(() => {
-    localStorage.removeItem("token");
-    navigate("/login"); // ou '/' selon ton choix
-  }, [navigate]);
+    logout(); // ← met à jour le contexte global
+    navigate("/login"); // ← redirection après logout
+  }, [logout, navigate]);
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <h2>Déconnexion</h2>
-      <p>Vous êtes déconnecté.</p>
+    <div className="container text-center mt-5">
+      <h1>Déconnexion en cours...</h1>
     </div>
   );
 }

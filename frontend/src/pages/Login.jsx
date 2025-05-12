@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -24,30 +26,22 @@ function Login() {
       const data = await res.json();
 
       if (res.ok) {
-        localStorage.setItem("token", data.token);
-        setMessage("Connexion réussie !");
-        navigate("/profile"); // ⬅️ redirection automatique
+        login(data.token);
+        navigate("/me");
       } else {
         setMessage(data.error || "Erreur inconnue");
       }
-    } catch (err) {
+    } catch {
       setMessage("Erreur réseau");
     }
   };
 
   return (
-    <div style={{ padding: "2rem" }}>
+    <div className="container mt-4">
       <h2>Connexion</h2>
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "1rem",
-          maxWidth: "300px",
-        }}
-      >
+      <form onSubmit={handleSubmit} className="mt-3">
         <input
+          className="form-control mb-2"
           type="email"
           name="email"
           placeholder="Email"
@@ -56,6 +50,7 @@ function Login() {
           required
         />
         <input
+          className="form-control mb-2"
           type="password"
           name="password"
           placeholder="Mot de passe"
@@ -63,9 +58,11 @@ function Login() {
           onChange={handleChange}
           required
         />
-        <button type="submit">Se connecter</button>
+        <button className="btn btn-primary" type="submit">
+          Se connecter
+        </button>
       </form>
-      {message && <p style={{ marginTop: "1rem" }}>{message}</p>}
+      {message && <div className="alert alert-danger mt-3">{message}</div>}
     </div>
   );
 }

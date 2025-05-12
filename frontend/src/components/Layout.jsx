@@ -1,20 +1,11 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "./context/AuthContext";
+import { Link, Outlet } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-function App() {
-  const [message, setMessage] = useState("Chargement...");
+function Layout() {
   const { user } = useAuth();
 
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/hello`)
-      .then((res) => res.json())
-      .then((data) => setMessage(data.message))
-      .catch(() => setMessage("Erreur de connexion"));
-  }, []);
-
   return (
-    <div>
+    <>
       <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-3">
         <Link className="navbar-brand" to="/">
           MonApp
@@ -52,11 +43,11 @@ function App() {
         </div>
       </nav>
 
-      <div className="container text-center mt-5">
-        <h1>{message}</h1>
-      </div>
-    </div>
+      <main className="container mt-5">
+        <Outlet /> {/* zone pour charger les pages */}
+      </main>
+    </>
   );
 }
 
-export default App;
+export default Layout;
