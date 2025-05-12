@@ -1,8 +1,8 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 
 function Register() {
   const [form, setForm] = useState({ email: "", password: "", username: "" });
-  const [message, setMessage] = useState("");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -10,7 +10,6 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
 
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/register`, {
@@ -22,55 +21,67 @@ function Register() {
       const data = await res.json();
 
       if (res.ok) {
-        setMessage("Inscription réussie ! Vous pouvez vous connecter.");
+        toast.success("Inscription réussie ! Vous pouvez vous connecter.");
         setForm({ email: "", password: "", username: "" });
       } else {
-        setMessage(data.error || "Erreur inconnue");
+        toast.error(data.error || "Erreur inconnue");
       }
     } catch (err) {
-      setMessage("Erreur réseau");
+      toast.error("Erreur réseau");
     }
   };
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <h2>Inscription</h2>
+    <div className="container mt-5">
+      <h2 className="text-center mb-4">Inscription</h2>
       <form
         onSubmit={handleSubmit}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "1rem",
-          maxWidth: "300px",
-        }}
+        className="mx-auto"
+        style={{ maxWidth: "400px" }}
       >
-        <input
-          type="text"
-          name="username"
-          placeholder="Nom d'utilisateur"
-          value={form.username}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Mot de passe"
-          value={form.password}
-          onChange={handleChange}
-          required
-        />
-        <button type="submit">S'inscrire</button>
+        <div className="mb-3">
+          <label className="form-label">Nom d'utilisateur</label>
+          <input
+            type="text"
+            name="username"
+            className="form-control"
+            placeholder="Nom d'utilisateur"
+            value={form.username}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Email</label>
+          <input
+            type="email"
+            name="email"
+            className="form-control"
+            placeholder="Email"
+            value={form.email}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Mot de passe</label>
+          <input
+            type="password"
+            name="password"
+            className="form-control"
+            placeholder="Mot de passe"
+            value={form.password}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <button type="submit" className="btn btn-primary w-100">
+          S'inscrire
+        </button>
       </form>
-      {message && <p style={{ marginTop: "1rem" }}>{message}</p>}
     </div>
   );
 }

@@ -7,10 +7,13 @@ import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Logout from "./pages/Logout";
 import Layout from "./components/Layout";
+import NotFound from "./pages/NotFound";
 import PrivateRoute from "./components/PrivateRoute";
 import PublicOnlyRoute from "./components/PublicOnlyRoute";
 import { AuthProvider } from "./context/AuthContext";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -48,8 +51,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             />
 
             <Route path="/logout" element={<Logout />} />
+            <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
+        <ToastContainer position="top-right" autoClose={3000} />
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>

@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { useAuth } from "./context/AuthContext";
 
 function App() {
   const [message, setMessage] = useState("Chargement...");
-  const { user } = useAuth();
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/hello`)
@@ -14,47 +11,8 @@ function App() {
   }, []);
 
   return (
-    <div>
-      <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-3">
-        <Link className="navbar-brand" to="/">
-          MonApp
-        </Link>
-        <div className="collapse navbar-collapse">
-          <ul className="navbar-nav ms-auto">
-            {!user ? (
-              <>
-                <li className="nav-item">
-                  <Link className="nav-link" to="/register">
-                    S’inscrire
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link className="nav-link" to="/login">
-                    Se connecter
-                  </Link>
-                </li>
-              </>
-            ) : (
-              <>
-                <li className="nav-item">
-                  <Link className="nav-link" to="/me">
-                    Profil
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link className="nav-link" to="/logout">
-                    Se déconnecter
-                  </Link>
-                </li>
-              </>
-            )}
-          </ul>
-        </div>
-      </nav>
-
-      <div className="container text-center mt-5">
-        <h1>{message}</h1>
-      </div>
+    <div className="text-center mt-5">
+      <h1>{message}</h1>
     </div>
   );
 }

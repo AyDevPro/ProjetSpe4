@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { toast } from "react-toastify";
 
 function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -27,9 +28,10 @@ function Login() {
 
       if (res.ok) {
         login(data.token);
+        toast.success("Connexion réussie !");
         navigate("/me");
       } else {
-        setMessage(data.error || "Erreur inconnue");
+        toast.error(data.error || "Erreur inconnue");
       }
     } catch {
       setMessage("Erreur réseau");
