@@ -15,11 +15,17 @@ app.get("/api/hello", (req, res) => {
   res.json({ message: "Hello from backend with MongoDB!" });
 });
 
-// 👉 Route de test : création d'un user
+// 👉 Route : création d'un user
 app.post("/api/user", async (req, res) => {
   const user = new User({ username: "aymeric", email: "aymeric@exemple.com" });
   await user.save();
   res.json(user);
+});
+
+// 👉 Route : récupération de tous les users
+app.get("/api/users", async (req, res) => {
+  const users = await User.find();
+  res.json(users);
 });
 
 const PORT = process.env.PORT || 3001;
