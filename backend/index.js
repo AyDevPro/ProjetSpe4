@@ -14,7 +14,24 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+if (!process.env.JWT_SECRET) {
+  console.error(
+    "❌ JWT_SECRET manquant ! Ajoutez-le dans .env ou dans les variables d’environnement."
+  );
+  process.exit(1);
+}
+
 connectDB(); // Connexion à MongoDB
+
+// ✅ Endpoint de debug temporaire (à ne pas exposer en prod)
+app.get("/api/debug-env", (req, res) => {
+  res.json({
+    MONGODB_URI: process.env.MONGODB_URI,
+    JWT_SECRET: process.env.JWT_SECRET || "non défini",
+    NODE_ENV: process.env.NODE_ENV || "non défini",
+    PORT: process.env.PORT || "par défaut : 3001",
+  });
+});
 
 // ✅ Test de base
 app.get("/api/hello", (req, res) => {
