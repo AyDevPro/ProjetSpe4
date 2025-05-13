@@ -1,8 +1,14 @@
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 function Layout() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   return (
     <>
@@ -11,7 +17,7 @@ function Layout() {
           MonApp
         </Link>
         <div className="collapse navbar-collapse">
-          <ul className="navbar-nav ms-auto">
+          <ul className="navbar-nav ms-auto align-items-center">
             {!user ? (
               <>
                 <li className="nav-item">
@@ -26,25 +32,55 @@ function Layout() {
                 </li>
               </>
             ) : (
-              <>
-                <li className="nav-item">
-                  <Link className="nav-link" to="/me">
-                    Profil
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link className="nav-link" to="/logout">
-                    Se déconnecter
-                  </Link>
-                </li>
-              </>
+              <li className="nav-item dropdown">
+                <a
+                  className="nav-link dropdown-toggle d-flex align-items-center"
+                  href="#"
+                  id="navbarDropdown"
+                  role="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  <img
+                    src={
+                      user.avatar ||
+                      "https://via.placeholder.com/40x40.png?text=👤"
+                    }
+                    alt="avatar"
+                    className="rounded-circle"
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      objectFit: "cover",
+                    }}
+                  />
+                </a>
+                <ul
+                  className="dropdown-menu dropdown-menu-end"
+                  aria-labelledby="navbarDropdown"
+                >
+                  <li>
+                    <Link className="dropdown-item" to="/me">
+                      👤 Mon profil
+                    </Link>
+                  </li>
+                  <li>
+                    <button
+                      className="dropdown-item text-danger"
+                      onClick={handleLogout}
+                    >
+                      🚪 Se déconnecter
+                    </button>
+                  </li>
+                </ul>
+              </li>
             )}
           </ul>
         </div>
       </nav>
 
       <main className="container mt-5">
-        <Outlet /> {/* zone pour charger les pages */}
+        <Outlet />
       </main>
     </>
   );
