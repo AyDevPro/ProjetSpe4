@@ -8,6 +8,7 @@ import { FaFilePdf, FaFileImage, FaFileAlt, FaFile } from "react-icons/fa";
 function Documents() {
   const { user } = useAuth();
   const [documents, setDocuments] = useState([]);
+  const [users, setUsers] = useState([]);
   const token = localStorage.getItem("token");
 
   useEffect(() => {
@@ -18,7 +19,8 @@ function Documents() {
         });
         const data = await res.json();
         if (res.ok) {
-          setDocuments(data);
+          const ownedDocuments = data.filter(doc => doc.owner === user._id);
+          setDocuments(ownedDocuments);
         } else {
           toast.error(data.error || "Erreur lors du chargement des documents");
         }
@@ -29,6 +31,24 @@ function Documents() {
 
     fetchDocuments();
   }, [token]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/users`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await res.json();
+        if (res.ok) setUsers(data);
+      } catch (err) {
+        toast.error("Erreur lors du chargement des utilisateurs");
+      }
+    };
+  
+    fetchUsers();
+  }, []);
 
   const getIcon = (doc) => {
     if (doc.type === "text") return <FaFileAlt />;
@@ -65,6 +85,60 @@ function Documents() {
       toast.error("Erreur réseau lors de la suppression");
     }
   };
+
+  const handleShare = async (docId) => {
+    const userList = users.filter(u => u._id !== user._id);
+    const email = window.prompt(
+      `Sélectionnez un utilisateur:\n${userList.map(u => `${u.email}`).join("\n")}`
+    );
+  
+    if (!email) return;
+  
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/documents/${docId}/invite`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+  
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("Utilisateur invité avec succès");
+      } else {
+        toast.error(data.error || "Erreur lors de l'invitation");
+      }
+    } catch (err) {
+      toast.error("Erreur réseau lors de l'invitation");
+    }
+  };
+  
+  const hideDocument = async (id) => {
+    if (!window.confirm("Voulez-vous masquer ce document ?")) return;
+  
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/documents/${id}/hide`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Erreur lors du masquage");
+        return;
+      }
+  
+      toast.success("Document masqué");
+      setDocuments((prev) => prev.filter((doc) => doc._id !== id));
+    } catch (err) {
+      toast.error("Erreur réseau lors du masquage");
+    }
+  };
+  
   
   
   return (
@@ -130,12 +204,29 @@ function Documents() {
                   )}
 
                   {/* Bouton de suppression */}
-                  <button
-                    onClick={() => deleteDocument(doc._id)}
-                    className="btn btn-outline-danger btn-sm"
-                  >
-                    🗑️ Supprimer
-                  </button>
+                  {doc.owner === user._id ? (
+                    <button
+                      onClick={() => deleteDocument(doc._id)}
+                      className="btn btn-outline-danger btn-sm"
+                    >
+                      🗑️ Supprimer
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => hideDocument(doc._id)}
+                      className="btn btn-outline-warning btn-sm"
+                    >
+                      🙈 Masquer
+                    </button>
+                  )}
+                  {doc.owner === user._id && (
+                    <button
+                      onClick={() => handleShare(doc._id)}
+                      className="btn btn-outline-info btn-sm me-2"
+                    >
+                      🤝 Partager
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

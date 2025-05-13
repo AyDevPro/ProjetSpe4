@@ -38,6 +38,11 @@ function Layout() {
                     📚 Mes documents
                   </Link>
                 </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/shared">
+                    🤝 Partagés avec moi
+                  </Link>
+                </li>
                 <li className="nav-item dropdown">
                   <a
                     className="nav-link dropdown-toggle d-flex align-items-center"

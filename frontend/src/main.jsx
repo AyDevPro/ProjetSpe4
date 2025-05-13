@@ -13,6 +13,7 @@ import NewTextDocument from "./pages/NewTextDocument";
 import TextEditor from "./pages/TextEditor";
 import PrivateRoute from "./components/PrivateRoute";
 import PublicOnlyRoute from "./components/PublicOnlyRoute";
+import SharedDocuments from "./pages/SharedDocuments";
 import { AuthProvider } from "./context/AuthContext";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
@@ -77,6 +78,15 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               element={
                 <PrivateRoute>
                   <Profile />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/shared"
+              element={
+                <PrivateRoute>
+                  <SharedDocuments />
                 </PrivateRoute>
               }
             />

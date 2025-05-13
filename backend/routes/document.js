@@ -24,6 +24,7 @@ const upload = multer({ storage });
 router.get("/documents", auth, async (req, res) => {
   const docs = await Document.find({
     $or: [{ owner: req.user.userId }, { collaborators: req.user.userId }],
+    hiddenFor: { $ne: req.user.userId },
   })
     .populate("lastModifiedBy", "username")
     .sort({ lastModified: -1 });
@@ -117,6 +118,38 @@ router.delete("/documents/:id", auth, async (req, res) => {
   await doc.deleteOne();
   res.json({ message: "Document supprimé" });
 });
+
+// 🔴 DELETE document collaborateur
+router.delete("/documents/:id/collaborators/:userId", auth, async (req, res) => {
+  const doc = await Document.findById(req.params.id);
+  if (!doc) return res.status(404).json({ error: "Document introuvable" });
+
+  if (!doc.owner.equals(req.user.userId))
+    return res.status(403).json({ error: "Accès interdit" });
+
+  doc.collaborators = doc.collaborators.filter(
+    (id) => id.toString() !== req.params.userId
+  );
+  await doc.save();
+  res.json({ message: "Collaborateur retiré" });
+});
+
+// 🔴 DELETE document masqué
+router.delete("/documents/:id/hide", auth, async (req, res) => {
+  const doc = await Document.findById(req.params.id);
+  if (!doc) return res.status(404).json({ error: "Document introuvable" });
+
+  if (!doc.collaborators.includes(req.user.userId))
+    return res.status(403).json({ error: "Accès interdit" });
+
+  if (!doc.hiddenFor.includes(req.user.userId)) {
+    doc.hiddenFor.push(req.user.userId);
+    await doc.save();
+  }
+
+  res.json({ message: "Document masqué" });
+});
+
 
 // 👥 POST invitation
 router.post("/documents/:id/invite", auth, async (req, res) => {

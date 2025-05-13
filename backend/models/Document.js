@@ -9,6 +9,7 @@ const documentSchema = new mongoose.Schema({
   owner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   collaborators: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   lastModifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  hiddenFor: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 });
 
 module.exports = mongoose.model("Document", documentSchema);

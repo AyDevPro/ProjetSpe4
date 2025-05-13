@@ -67,4 +67,14 @@ router.put("/me/password", auth, async (req, res) => {
   }
 });
 
+// Récupérer tous les utilisateurs (pour partage, etc.)
+router.get("/users", auth, async (req, res) => {
+  try {
+    const users = await User.find({}, "username email _id");
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: "Erreur lors de la récupération des utilisateurs" });
+  }
+});
+
 module.exports = router;
