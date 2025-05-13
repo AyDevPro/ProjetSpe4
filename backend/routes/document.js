@@ -31,6 +31,15 @@ router.get("/documents", auth, async (req, res) => {
   res.json(docs);
 });
 
+// 🟢 GET fichier uploadé (image ou PDF)
+router.get("/uploads/:filename", (req, res) => {
+  const filePath = path.join(__dirname, "..", "uploads", req.params.filename);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: "Fichier introuvable" });
+  }
+  res.sendFile(filePath);
+});
+
 // 🟢 POST document texte
 router.post("/documents", auth, async (req, res) => {
   const { name, content } = req.body;

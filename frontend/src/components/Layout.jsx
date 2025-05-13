@@ -50,7 +50,7 @@ function Layout() {
                     <img
                       src={
                         user.avatar ||
-                        "https://via.placeholder.com/40x40.png?text=👤"
+                        "images/compte-utilisateur.png"
                       }
                       alt="avatar"
                       className="rounded-circle"

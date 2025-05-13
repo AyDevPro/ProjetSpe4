@@ -133,7 +133,7 @@ function Profile() {
               <img
                 src={
                   user.avatar ||
-                  "https://via.placeholder.com/100x100.png?text=👤"
+                  "images/compte-utilisateur.png"
                 }
                 alt="Avatar"
                 className="rounded-circle mb-2"
