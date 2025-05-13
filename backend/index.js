@@ -19,6 +19,8 @@ app.get("/api/hello", (req, res) => {
 app.use("/api", authRoutes);
 app.use("/api", userRoutes);
 app.use("/api/2fa", twoFARoutes);
+app.use("/uploads", express.static("uploads"));
+app.use("/api", require("./routes/document"));
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

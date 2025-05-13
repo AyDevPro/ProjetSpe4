@@ -62,7 +62,6 @@ function Profile() {
     if (data.user) {
       setUser(data.user);
       setAuthUser(data.user);
-      localStorage.setItem("user", JSON.stringify(data.user));
       setEditField(null);
       setAvatarFile(null);
       toast.success("Profil mis à jour !");

@@ -8,6 +8,9 @@ import Profile from "./pages/Profile";
 import Logout from "./pages/Logout";
 import Layout from "./components/Layout";
 import NotFound from "./pages/NotFound";
+import Documents from "./pages/Documents";
+import NewTextDocument from "./pages/NewTextDocument";
+import TextEditor from "./pages/TextEditor";
 import PrivateRoute from "./components/PrivateRoute";
 import PublicOnlyRoute from "./components/PublicOnlyRoute";
 import { AuthProvider } from "./context/AuthContext";
@@ -23,6 +26,33 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<App />} />
+
+            <Route
+              path="/documents"
+              element={
+                <PrivateRoute>
+                  <Documents />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/documents/new"
+              element={
+                <PrivateRoute>
+                  <NewTextDocument />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/documents/:id"
+              element={
+                <PrivateRoute>
+                  <TextEditor />
+                </PrivateRoute>
+              }
+            />
 
             <Route
               path="/register"
