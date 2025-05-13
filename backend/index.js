@@ -1,78 +1,52 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
-
-const connectDB = require("./db");
-const User = require("./models/User");
-
+const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
+const User = require("./models/User");
 const auth = require("./middlewares/auth");
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
 
-if (!process.env.JWT_SECRET) {
-  console.error(
-    "❌ JWT_SECRET manquant ! Ajoutez-le dans .env ou dans les variables d’environnement."
-  );
-  process.exit(1);
-}
-
-connectDB(); // Connexion à MongoDB
-
-// ✅ Endpoint de debug temporaire (à ne pas exposer en prod)
-app.get("/api/debug-env", (req, res) => {
-  res.json({
-    MONGODB_URI: process.env.MONGODB_URI,
-    JWT_SECRET: process.env.JWT_SECRET || "non défini",
-    NODE_ENV: process.env.NODE_ENV || "non défini",
-    PORT: process.env.PORT || "par défaut : 3001",
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => console.log("✅ Connecté à MongoDB"))
+  .catch((err) => {
+    console.error("Erreur de connexion MongoDB:", err);
+    process.exit(1);
   });
-});
 
-// ✅ Test de base
-app.get("/api/hello", (req, res) => {
-  res.json({ message: "Hello from backend with MongoDB!" });
-});
-
-// ✅ Inscription
 app.post("/api/register", async (req, res) => {
+  const { email, password, username } = req.body;
+  if (!email || !password)
+    return res.status(400).json({ error: "Champs manquants" });
+
+  const hashedPassword = await bcrypt.hash(password, 10);
   try {
-    const { email, password, username } = req.body;
-    if (!email || !password)
-      return res.status(400).json({ error: "Champs manquants" });
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     const user = new User({ email, password: hashedPassword, username });
     await user.save();
-
     res.status(201).json({ message: "Utilisateur créé" });
   } catch (err) {
-    if (err.code === 11000) {
+    if (err.code === 11000)
       return res.status(409).json({ error: "Email déjà utilisé" });
-    }
     res.status(500).json({ error: "Erreur serveur" });
   }
 });
 
-// ✅ Connexion
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
-
-  if (!email || !password) {
+  if (!email || !password)
     return res.status(400).json({ error: "Champs manquants" });
-  }
 
   const user = await User.findOne({ email });
   if (!user) return res.status(401).json({ error: "Identifiants incorrects" });
 
   const isValid = await bcrypt.compare(password, user.password);
-  if (!isValid)
-    return res.status(401).json({ error: "Identifiants incorrects" });
+  if (!isValid) return res.status(401).json({ error: "Identifiants incorrects" });
 
   const token = jwt.sign(
     { userId: user._id, email: user.email },
@@ -83,7 +57,6 @@ app.post("/api/login", async (req, res) => {
   res.json({ token, email: user.email, username: user.username });
 });
 
-// ✅ Infos utilisateur connecté
 app.get("/api/me", auth, async (req, res) => {
   const user = await User.findById(req.user.userId).select("-password");
   if (!user) return res.status(404).json({ error: "Utilisateur introuvable" });
@@ -91,7 +64,31 @@ app.get("/api/me", auth, async (req, res) => {
   res.json(user);
 });
 
+app.put("/api/me", auth, async (req, res) => {
+  const { username, email, avatar } = req.body;
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) return res.status(404).json({ error: "Utilisateur introuvable" });
+
+    if (username) user.username = username;
+    if (email) user.email = email;
+    if (avatar) user.avatar = avatar;
+
+    await user.save();
+    res.json({
+      message: "Profil mis à jour",
+      user: {
+        username: user.username,
+        email: user.email,
+        avatar: user.avatar,
+      },
+    });
+  } catch {
+    res.status(500).json({ error: "Erreur mise à jour" });
+  }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`🚀 Backend listening on http://localhost:${PORT}`);
+  console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
 });
