@@ -15,7 +15,7 @@ function Profile() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordStrength, setPasswordStrength] = useState("");
 
-  const { setUser: setAuthUser } = useAuth(); // ✅ contexte global (navbar)
+  const { setUser: setAuthUser } = useAuth();
   const token = localStorage.getItem("token");
 
   useEffect(() => {
@@ -60,9 +60,9 @@ function Profile() {
 
     const data = await res.json();
     if (data.user) {
-      setUser(data.user); // local
-      setAuthUser(data.user); // contexte (navbar)
-      localStorage.setItem("user", JSON.stringify(data.user)); // persistance
+      setUser(data.user);
+      setAuthUser(data.user);
+      localStorage.setItem("user", JSON.stringify(data.user));
       setEditField(null);
       setAvatarFile(null);
       toast.success("Profil mis à jour !");
@@ -297,12 +297,15 @@ function Profile() {
                 </div>
               </form>
             )}
+
+            {/* 2FA */}
+            <hr className="my-4" />
+            <Enable2FA />
           </>
         ) : (
           <p className="text-center">Chargement…</p>
         )}
       </div>
-      <Enable2FA />
     </div>
   );
 }

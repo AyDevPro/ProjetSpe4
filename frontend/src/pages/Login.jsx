@@ -4,67 +4,107 @@ import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
 
 function Login() {
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [message, setMessage] = useState("");
-  const navigate = useNavigate();
   const { login } = useAuth();
+  const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [twoFactorRequired, setTwoFactorRequired] = useState(false);
+  const [userPending, setUserPending] = useState(null); // Contient _id, email, username
+  const [twoFactorToken, setTwoFactorToken] = useState("");
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      if (data.twoFactor) {
+        // Étape 2FA
+        setTwoFactorRequired(true);
+        setUserPending(data);
+        toast.info("Code 2FA requis");
+      } else {
+        login(data.token);
+        navigate("/");
+        toast.success("Connecté !");
+      }
+    } else {
+      toast.error(data.error || "Erreur lors de la connexion");
+    }
   };
 
-  const handleSubmit = async (e) => {
+  const handle2FA = async (e) => {
     e.preventDefault();
-    setMessage("");
 
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/2fa/validate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: userPending.userId,
+        token: twoFactorToken,
+      }),
+    });
 
-      const data = await res.json();
-
-      if (res.ok) {
-        login(data.token);
-        toast.success("Connexion réussie !");
-        navigate("/me");
-      } else {
-        toast.error(data.error || "Erreur inconnue");
-      }
-    } catch {
-      setMessage("Erreur réseau");
+    const data = await res.json();
+    if (res.ok) {
+      login(data.token);
+      navigate("/");
+      toast.success("Connecté avec 2FA !");
+    } else {
+      toast.error(data.error || "Code invalide");
     }
   };
 
   return (
-    <div className="container mt-4">
-      <h2>Connexion</h2>
-      <form onSubmit={handleSubmit} className="mt-3">
-        <input
-          className="form-control mb-2"
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={handleChange}
-          required
-        />
-        <input
-          className="form-control mb-2"
-          type="password"
-          name="password"
-          placeholder="Mot de passe"
-          value={form.password}
-          onChange={handleChange}
-          required
-        />
-        <button className="btn btn-primary" type="submit">
-          Se connecter
-        </button>
-      </form>
-      {message && <div className="alert alert-danger mt-3">{message}</div>}
+    <div className="container mt-5" style={{ maxWidth: "500px" }}>
+      <h2 className="mb-4">Connexion</h2>
+
+      {!twoFactorRequired ? (
+        <form onSubmit={handleLogin}>
+          <div className="mb-3">
+            <label className="form-label">Adresse email</label>
+            <input
+              type="email"
+              className="form-control"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label className="form-label">Mot de passe</label>
+            <input
+              type="password"
+              className="form-control"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          <button className="btn btn-primary w-100">Se connecter</button>
+        </form>
+      ) : (
+        <form onSubmit={handle2FA}>
+          <p>Un code 2FA est requis pour finaliser la connexion.</p>
+          <input
+            type="text"
+            className="form-control mb-3"
+            placeholder="Code à 6 chiffres"
+            value={twoFactorToken}
+            onChange={(e) => setTwoFactorToken(e.target.value)}
+            required
+          />
+          <button className="btn btn-success w-100">Valider le code</button>
+        </form>
+      )}
     </div>
   );
 }
