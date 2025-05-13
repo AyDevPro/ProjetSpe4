@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useAuth } from "../context/AuthContext";
+import Enable2FA from "../components/Enable2FA";
 
 function Profile() {
   const [user, setUser] = useState(null);
@@ -301,6 +302,7 @@ function Profile() {
           <p className="text-center">Chargement…</p>
         )}
       </div>
+      <Enable2FA />
     </div>
   );
 }
