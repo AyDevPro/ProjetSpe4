@@ -43,6 +43,14 @@ function Layout() {
                     🤝 Partagés avec moi
                   </Link>
                 </li>
+                {user?.role === "admin" && (
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/admin">
+                      🛠️ Admin
+                    </Link>
+                  </li>
+                )}
+
                 <li className="nav-item dropdown">
                   <a
                     className="nav-link dropdown-toggle d-flex align-items-center"
@@ -53,10 +61,7 @@ function Layout() {
                     aria-expanded="false"
                   >
                     <img
-                      src={
-                        user.avatar ||
-                        "images/compte-utilisateur.png"
-                      }
+                      src={user.avatar || "images/compte-utilisateur.png"}
                       alt="avatar"
                       className="rounded-circle"
                       style={{

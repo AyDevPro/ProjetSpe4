@@ -70,9 +70,9 @@ function Login() {
       {!twoFactorRequired ? (
         <form onSubmit={handleLogin}>
           <div className="mb-3">
-            <label className="form-label">Adresse email</label>
+            <label className="form-label">Email ou nom d'utilisateur</label>
             <input
-              type="email"
+              type="text"
               className="form-control"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
