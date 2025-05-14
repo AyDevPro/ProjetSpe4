@@ -7,7 +7,6 @@ const fs = require("fs");
 
 const router = express.Router();
 
-// Setup multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const folder = path.join(__dirname, "..", "uploads");
@@ -20,11 +19,12 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// 🟢 GET documents accessibles
 router.get("/documents", auth, async (req, res) => {
+  const showHidden = req.query.showHidden === "true";
+
   const docs = await Document.find({
     $or: [{ owner: req.user.userId }, { collaborators: req.user.userId }],
-    hiddenFor: { $ne: req.user.userId },
+    ...(showHidden ? {} : { hiddenFor: { $ne: req.user.userId } }),
   })
     .populate("lastModifiedBy", "username")
     .sort({ lastModified: -1 });
@@ -32,16 +32,14 @@ router.get("/documents", auth, async (req, res) => {
   res.json(docs);
 });
 
-// 🟢 GET fichier uploadé (image ou PDF)
 router.get("/uploads/:filename", (req, res) => {
   const filePath = path.join(__dirname, "..", "uploads", req.params.filename);
   if (!fs.existsSync(filePath)) {
     return res.status(404).json({ error: "Fichier introuvable" });
   }
-  res.sendFile(filePath);
+  res.download(filePath);
 });
 
-// 🟢 POST document texte
 router.post("/documents", auth, async (req, res) => {
   const { name, content } = req.body;
   if (!name) return res.status(400).json({ error: "Nom requis" });
@@ -58,7 +56,6 @@ router.post("/documents", auth, async (req, res) => {
   res.status(201).json(doc);
 });
 
-// 🟢 POST document fichier
 router.post(
   "/documents/upload",
   auth,
@@ -79,11 +76,9 @@ router.post(
   }
 );
 
-// 🟡 PUT modification document
 router.put("/documents/:id", auth, async (req, res) => {
   const { content, name } = req.body;
   const doc = await Document.findById(req.params.id);
-
   if (!doc) return res.status(404).json({ error: "Document introuvable" });
 
   const isAuthorized =
@@ -101,15 +96,13 @@ router.put("/documents/:id", auth, async (req, res) => {
   res.json(doc);
 });
 
-// 🔴 DELETE document
 router.delete("/documents/:id", auth, async (req, res) => {
   const doc = await Document.findById(req.params.id);
-
   if (!doc) return res.status(404).json({ error: "Document introuvable" });
+
   if (!doc.owner.equals(req.user.userId))
     return res.status(403).json({ error: "Accès interdit" });
 
-  // Supprime le fichier si c’est un upload
   if (doc.type === "file" && doc.fileUrl) {
     const filePath = path.join(__dirname, "..", doc.fileUrl);
     fs.unlink(filePath, () => {});
@@ -119,22 +112,24 @@ router.delete("/documents/:id", auth, async (req, res) => {
   res.json({ message: "Document supprimé" });
 });
 
-// 🔴 DELETE document collaborateur
-router.delete("/documents/:id/collaborators/:userId", auth, async (req, res) => {
-  const doc = await Document.findById(req.params.id);
-  if (!doc) return res.status(404).json({ error: "Document introuvable" });
+router.delete(
+  "/documents/:id/collaborators/:userId",
+  auth,
+  async (req, res) => {
+    const doc = await Document.findById(req.params.id);
+    if (!doc) return res.status(404).json({ error: "Document introuvable" });
 
-  if (!doc.owner.equals(req.user.userId))
-    return res.status(403).json({ error: "Accès interdit" });
+    if (!doc.owner.equals(req.user.userId))
+      return res.status(403).json({ error: "Accès interdit" });
 
-  doc.collaborators = doc.collaborators.filter(
-    (id) => id.toString() !== req.params.userId
-  );
-  await doc.save();
-  res.json({ message: "Collaborateur retiré" });
-});
+    doc.collaborators = doc.collaborators.filter(
+      (id) => id.toString() !== req.params.userId
+    );
+    await doc.save();
+    res.json({ message: "Collaborateur retiré" });
+  }
+);
 
-// 🔴 DELETE document masqué
 router.delete("/documents/:id/hide", auth, async (req, res) => {
   const doc = await Document.findById(req.params.id);
   if (!doc) return res.status(404).json({ error: "Document introuvable" });
@@ -150,8 +145,6 @@ router.delete("/documents/:id/hide", auth, async (req, res) => {
   res.json({ message: "Document masqué" });
 });
 
-
-// 👥 POST invitation
 router.post("/documents/:id/invite", auth, async (req, res) => {
   const { email } = req.body;
   const doc = await Document.findById(req.params.id);
