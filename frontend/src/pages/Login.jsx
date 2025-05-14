@@ -90,7 +90,7 @@ function Login() {
             />
           </div>
           <button className="btn btn-primary w-100">Se connecter</button>
-        </form>
+        </form>  
       ) : (
         <form onSubmit={handle2FA}>
           <p>Un code 2FA est requis pour finaliser la connexion.</p>
@@ -105,6 +105,11 @@ function Login() {
           <button className="btn btn-success w-100">Valider le code</button>
         </form>
       )}
+      <div class="auth-links">
+        <p>Connexion avec des apps externes :</p>
+        <a class="btn btn-white google-button" href={`${import.meta.env.VITE_API_URL}/auth/google`}>Login with Google</a><br></br>
+        {/* <a href="/auth/facebook">Login with Facebook</a> */}
+      </div>
     </div>
   );
 }

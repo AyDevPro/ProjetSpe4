@@ -195,7 +195,7 @@ function Documents() {
                       </a>
                       <a
                         href={`${import.meta.env.VITE_API_URL}${doc.fileUrl}`}
-                        download={doc.name}
+                        download
                         className="btn btn-outline-success btn-sm me-2"
                       >
                         ⬇️ Télécharger
