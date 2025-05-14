@@ -1,39 +1,39 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 
 function SharedDocuments() {
   const { user } = useAuth();
   const [documents, setDocuments] = useState([]);
+  const [showHidden, setShowHidden] = useState(false);
   const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/documents`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await res.json();
-        if (res.ok) {
-          // Ne garde que les documents que l'utilisateur possède ou qui lui sont partagés
-          const sharedDocs = data.filter(
-            (doc) =>
-              doc.owner === user._id || doc.collaborators.includes(user._id)
-          );
-          setDocuments(sharedDocs);
-        } else {
-          toast.error(data.error || "Erreur lors du chargement des documents");
+  const fetchDocuments = async () => {
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/documents?showHidden=${showHidden}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
         }
-      } catch (err) {
-        toast.error("Erreur de connexion au serveur");
+      );
+      const data = await res.json();
+      if (res.ok) {
+        const sharedDocs = data.filter(
+          (doc) =>
+            doc.owner !== user._id && doc.collaborators.includes(user._id)
+        );
+        setDocuments(sharedDocs);
+      } else {
+        toast.error(data.error || "Erreur lors du chargement des documents");
       }
-    };
+    } catch (err) {
+      toast.error("Erreur de connexion au serveur");
+    }
+  };
 
+  useEffect(() => {
     fetchDocuments();
-  }, [token, user._id]);
+  }, [token, user._id, showHidden]);
 
   const handleHide = async (id) => {
     if (!window.confirm("Voulez-vous masquer ce document ?")) return;
@@ -56,7 +56,7 @@ function SharedDocuments() {
       }
 
       toast.success("Document masqué");
-      setDocuments((prev) => prev.filter((doc) => doc._id !== id));
+      fetchDocuments();
     } catch (err) {
       toast.error("Erreur réseau lors du masquage");
     }
@@ -65,6 +65,20 @@ function SharedDocuments() {
   return (
     <div className="container mt-4">
       <h2>📤 Documents partagés avec vous</h2>
+
+      <div className="form-check mb-3">
+        <input
+          className="form-check-input"
+          type="checkbox"
+          id="showHidden"
+          checked={showHidden}
+          onChange={() => setShowHidden((prev) => !prev)}
+        />
+        <label className="form-check-label" htmlFor="showHidden">
+          Afficher les documents masqués
+        </label>
+      </div>
+
       {documents.length === 0 ? (
         <p>Aucun document partagé pour le moment.</p>
       ) : (
@@ -74,32 +88,30 @@ function SharedDocuments() {
               key={doc._id}
               className="list-group-item d-flex justify-content-between align-items-center"
             >
-              <Link
-                to={`/documents/${doc._id}`}
-                className="text-decoration-none"
+              {doc.type === "text" ? (
+                <a
+                  href={`/documents/${doc._id}`}
+                  className="text-decoration-none"
+                >
+                  📝 {doc.name}
+                </a>
+              ) : (
+                <a
+                  href={`${import.meta.env.VITE_API_URL}${doc.fileUrl}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-decoration-none"
+                  download={doc.name}
+                >
+                  📎 {doc.name}
+                </a>
+              )}
+              <button
+                className="btn btn-sm btn-outline-warning"
+                onClick={() => handleHide(doc._id)}
               >
-                📝 {doc.name}
-              </Link>
-
-              <div>
-                {doc.owner === user._id ? (
-                  <span className="badge text-bg-primary me-2">
-                    Propriétaire
-                  </span>
-                ) : (
-                  <>
-                    <span className="badge text-bg-secondary me-2">
-                      Collaborateur
-                    </span>
-                    <button
-                      className="btn btn-sm btn-outline-warning"
-                      onClick={() => handleHide(doc._id)}
-                    >
-                      🙈 Masquer
-                    </button>
-                  </>
-                )}
-              </div>
+                🙈 Masquer
+              </button>
             </li>
           ))}
         </ul>
