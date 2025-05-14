@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
+import { FaGoogle } from "react-icons/fa";
 
 function Login() {
   const { login } = useAuth();
@@ -107,7 +108,14 @@ function Login() {
       )}
       <div class="auth-links">
         <p>Connexion avec des apps externes :</p>
-        <a class="btn btn-white google-button" href={`${import.meta.env.VITE_API_URL}/auth/google`}>Login with Google</a><br></br>
+        <a
+          className="btn btn-outline-dark w-100 mt-3 d-flex align-items-center justify-content-center gap-2"
+          href={`${import.meta.env.VITE_API_URL}/auth/google`}
+        >
+          <FaGoogle />
+          Connexion avec Google
+        </a>
+
         {/* <a href="/auth/facebook">Login with Facebook</a> */}
       </div>
     </div>
