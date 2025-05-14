@@ -3,9 +3,10 @@ import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { io } from "socket.io-client";
 import { useAuth } from "../context/AuthContext";
-import CallManager from "../components/CallManager";
+import AudioCallManager from "../components/AudioCallManager";
+import CallParticipantsList from "../components/CallParticipantsList";
 
-const SAVE_INTERVAL_MS = 2000; // auto-save toutes les 2 secondes
+const SAVE_INTERVAL_MS = 2000;
 
 function TextEditor() {
   const { id: documentId } = useParams();
@@ -17,9 +18,8 @@ function TextEditor() {
   const [hasAccess, setHasAccess] = useState(false);
 
   const socketRef = useRef(null);
-  const contentRef = useRef(""); // évite des conflits de synchro
+  const contentRef = useRef("");
 
-  // Chargement initial via REST pour contrôle d'accès
   useEffect(() => {
     const fetchDocument = async () => {
       try {
@@ -31,11 +31,7 @@ function TextEditor() {
         );
 
         if (!res.ok) {
-          if (res.status === 403) {
-            toast.error("Accès refusé à ce document");
-          } else {
-            toast.error("Erreur lors du chargement du document");
-          }
+          toast.error("Erreur lors du chargement du document");
           return;
         }
 
@@ -51,7 +47,6 @@ function TextEditor() {
     fetchDocument();
   }, [documentId]);
 
-  // Initialisation socket si autorisé
   useEffect(() => {
     if (!hasAccess) return;
 
@@ -81,7 +76,6 @@ function TextEditor() {
     };
   }, [documentId, hasAccess]);
 
-  // Auto-save
   useEffect(() => {
     if (!hasAccess) return;
 
@@ -118,17 +112,32 @@ function TextEditor() {
 
   return (
     <div className="container mt-4">
-      <div className="d-flex justify-content-between align-items-center mb-2">
+      <div className="d-flex justify-content-between align-items-center mb-3">
         <h2 className="mb-0">📝 Éditeur texte</h2>
-        <span style={{ fontSize: "0.9em", color: "#555" }}>{status}</span>
+        <div>
+          <span className="me-3 text-muted">{status}</span>
+        </div>
       </div>
-      <textarea
-        className="form-control"
-        style={{ minHeight: "300px", fontFamily: "monospace" }}
-        value={content}
-        onChange={handleChange}
-      />
-      <CallManager documentId={documentId} />
+
+      <div className="row">
+        <div className="col-md-8 mb-4">
+          <textarea
+            className="form-control"
+            style={{ minHeight: "400px", fontFamily: "monospace" }}
+            value={content}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className="col-md-4">
+          <div className="card">
+            <div className="card-body">
+              <AudioCallManager documentId={documentId} />
+              <hr />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

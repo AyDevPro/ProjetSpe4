@@ -66,6 +66,18 @@ app.use("/uploads", express.static("uploads"));
 app.use("/api", require("./routes/document"));
 app.use("/api", adminRoutes);
 
+const broadcastCallParticipants = (documentId) => {
+  const list = activeCalls[documentId]
+    ? [...activeCalls[documentId]].map(([socketId, username]) => ({
+        socketId,
+        username,
+      }))
+    : [];
+
+  // On envoie à tous les membres de la salle du document (et pas seulement du call)
+  io.to(documentId).emit("current-participants", list);
+};
+
 io.on("connection", (socket) => {
   console.log("✅ Client connecté :", socket.id);
 
@@ -74,8 +86,11 @@ io.on("connection", (socket) => {
     console.log(`📄 ${socket.id} a rejoint le document ${documentId}`);
 
     const doc = await Document.findById(documentId);
+
     if (doc) {
       socket.emit("load-document", doc.content || "");
+      if (activeCalls[documentId]) {
+      }
     }
   });
 
@@ -92,38 +107,69 @@ io.on("connection", (socket) => {
     console.log(`💾 Document ${documentId} sauvegardé`);
   });
 
+  socket.on("join-call", ({ documentId, username }) => {
+    const room = `call-${documentId}`;
+    socket.join(room);
+
+    if (!activeCalls[documentId]) activeCalls[documentId] = new Map();
+    activeCalls[documentId].set(socket.id, username);
+
+    // Annonce aux autres
+    socket.to(room).emit("user-joined-call", {
+      socketId: socket.id,
+      username,
+    });
+
+    // Envoie la liste des participants au nouveau venu
+    const list = [...activeCalls[documentId]].map(([socketId, username]) => ({
+      socketId,
+      username,
+    }));
+    broadcastCallParticipants(documentId);
+  });
+
+  socket.on("signal", ({ to, data }) => {
+    io.to(to).emit("signal", { from: socket.id, data });
+  });
+
+  socket.on("leave-call", ({ documentId }) => {
+    const room = `call-${documentId}`;
+    socket.leave(room);
+    if (activeCalls[documentId]) {
+      activeCalls[documentId].delete(socket.id);
+      socket.to(room).emit("user-left-call", socket.id);
+    }
+    broadcastCallParticipants(documentId);
+  });
+
   socket.on("disconnect", () => {
+    // Parcours tous les appels actifs
+    for (const [docId, participants] of Object.entries(activeCalls)) {
+      if (participants.has(socket.id)) {
+        participants.delete(socket.id);
+        io.to(`call-${docId}`).emit("user-left-call", socket.id);
+
+        // 🔁 Mets à jour tous les utilisateurs du document concerné
+        broadcastCallParticipants(docId);
+
+        if (participants.size === 0) {
+          delete activeCalls[docId];
+        }
+      }
+    }
+
     console.log("❌ Client déconnecté :", socket.id);
   });
 
-  socket.on("join-call", ({ documentId }) => {
-    socket.join(`call-${documentId}`);
-    if (!activeCalls[documentId]) activeCalls[documentId] = new Set();
-    activeCalls[documentId].add(socket.id);
-
-    socket.to(`call-${documentId}`).emit("user-joined-call", socket.id);
-
-    socket.on("signal", ({ to, data }) => {
-      io.to(to).emit("signal", { from: socket.id, data });
-    });
-
-    socket.on("disconnect", () => {
-      if (activeCalls[documentId]) {
-        activeCalls[documentId].delete(socket.id);
-        socket.to(`call-${documentId}`).emit("user-left-call", socket.id);
-        if (activeCalls[documentId].size === 0) {
-          delete activeCalls[documentId];
-        }
-      }
-    });
-
-    socket.on("leave-call", () => {
-      socket.leave(`call-${documentId}`);
-      if (activeCalls[documentId]) {
-        activeCalls[documentId].delete(socket.id);
-        socket.to(`call-${documentId}`).emit("user-left-call", socket.id);
-      }
-    });
+  socket.on("get-call-participants", (documentId) => {
+    const room = `call-${documentId}`;
+    const list = activeCalls[documentId]
+      ? [...activeCalls[documentId]].map(([socketId, username]) => ({
+          socketId,
+          username,
+        }))
+      : [];
+    socket.emit("current-participants", list);
   });
 });
 

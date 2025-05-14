@@ -1,26 +1,42 @@
 import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
+import { useAuth } from "../context/AuthContext";
+import CallStatusBadge from "./CallStatusBadge";
+import CallParticipantsList from "./CallParticipantsList";
 
 const socket = io(import.meta.env.VITE_API_URL.replace("/api", ""), {
   transports: ["websocket"],
 });
 
-function CallManager({ documentId }) {
-  const [inCall, setInCall] = useState(false);
+function AudioCallManager({ documentId }) {
+  const { user } = useAuth();
   const peersRef = useRef({});
   const localStream = useRef(null);
   const audioContainer = useRef();
 
+  const [inCall, setInCall] = useState(false);
+  const [participants, setParticipants] = useState([]);
+
   useEffect(() => {
-    // Écoute les signaux entrants
-    socket.on("user-joined-call", handleNewPeer);
+    socket.on("user-joined-call", ({ socketId, username }) => {
+      setParticipants((prev) => [...prev, { socketId, username }]);
+      handleNewPeer(socketId);
+    });
+
+    socket.on("user-left-call", (socketId) => {
+      setParticipants((prev) => prev.filter((p) => p.socketId !== socketId));
+      if (peersRef.current[socketId]) {
+        peersRef.current[socketId].close();
+        delete peersRef.current[socketId];
+      }
+    });
+
     socket.on("signal", handleSignal);
-    socket.on("user-left-call", handleUserLeft);
 
     return () => {
       socket.off("user-joined-call");
-      socket.off("signal");
       socket.off("user-left-call");
+      socket.off("signal");
     };
   }, []);
 
@@ -30,14 +46,20 @@ function CallManager({ documentId }) {
       audio: true,
     });
 
-    // Envoie l'audio local (optionnel : préécoute)
     const audio = document.createElement("audio");
     audio.srcObject = localStream.current;
     audio.muted = true;
     audio.autoplay = true;
     audioContainer.current.appendChild(audio);
 
-    socket.emit("join-call", { documentId });
+    socket.emit("join-call", {
+      documentId,
+      username: user.username || user.email,
+    });
+
+    socket.once("current-participants", (list) => {
+      setParticipants(list);
+    });
   };
 
   const handleNewPeer = (peerId) => {
@@ -117,13 +139,6 @@ function CallManager({ documentId }) {
     }
   };
 
-  const handleUserLeft = (peerId) => {
-    if (peersRef.current[peerId]) {
-      peersRef.current[peerId].close();
-      delete peersRef.current[peerId];
-    }
-  };
-
   const leaveCall = () => {
     socket.emit("leave-call", { documentId });
     Object.values(peersRef.current).forEach((peer) => peer.close());
@@ -132,23 +147,44 @@ function CallManager({ documentId }) {
       localStream.current.getTracks().forEach((track) => track.stop());
     }
     setInCall(false);
+    setParticipants([]);
     audioContainer.current.innerHTML = "";
   };
 
   return (
-    <div className="mt-3">
-      {!inCall ? (
-        <button className="btn btn-success btn-sm" onClick={joinCall}>
-          📞 Rejoindre l'appel
-        </button>
-      ) : (
-        <button className="btn btn-danger btn-sm" onClick={leaveCall}>
-          ❌ Quitter l'appel
-        </button>
-      )}
-      <div ref={audioContainer}></div>
+    <div className="card mt-4 shadow-sm">
+      <div className="card-body">
+        <div className="d-flex justify-content-between align-items-center mb-2">
+          <h5 className="card-title mb-0">📞 Appel audio</h5>
+          <CallStatusBadge documentId={documentId} />
+        </div>
+
+        <div className="mb-3">
+          {!inCall ? (
+            <button
+              className="btn btn-outline-success btn-sm"
+              onClick={joinCall}
+            >
+              ▶️ Rejoindre
+            </button>
+          ) : (
+            <button
+              className="btn btn-outline-danger btn-sm"
+              onClick={leaveCall}
+            >
+              ❌ Quitter
+            </button>
+          )}
+        </div>
+
+        <hr />
+        <h6 className="text-muted mb-2">👤 Participants connectés</h6>
+        <CallParticipantsList documentId={documentId} />
+
+        <div ref={audioContainer} />
+      </div>
     </div>
   );
 }
 
-export default CallManager;
+export default AudioCallManager;
