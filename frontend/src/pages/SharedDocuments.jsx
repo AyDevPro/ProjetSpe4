@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
+import { Link } from "react-router-dom";
 
 function SharedDocuments() {
   const { user } = useAuth();
@@ -89,12 +90,12 @@ function SharedDocuments() {
               className="list-group-item d-flex justify-content-between align-items-center"
             >
               {doc.type === "text" ? (
-                <a
-                  href={`/documents/${doc._id}`}
+                <Link
+                  to={`/documents/${doc._id}`}
                   className="text-decoration-none"
                 >
                   📝 {doc.name}
-                </a>
+                </Link>
               ) : (
                 <a
                   href={`${import.meta.env.VITE_API_URL}${doc.fileUrl}`}

@@ -78,6 +78,31 @@ router.post(
   }
 );
 
+router.get("/documents/:id", auth, async (req, res) => {
+  try {
+    const doc = await Document.findById(req.params.id);
+    if (!doc) return res.status(404).json({ error: "Document introuvable" });
+
+    const userId = req.user.userId;
+
+    const isOwner = doc.owner.equals(userId);
+    const isCollaborator = doc.collaborators.includes(userId);
+
+    if (!isOwner && !isCollaborator) {
+      return res.status(403).json({ error: "Accès interdit" });
+    }
+
+    // Vérifie si masqué
+    if (!isOwner && doc.hiddenFor.includes(userId)) {
+      return res.status(403).json({ error: "Document masqué" });
+    }
+
+    res.json(doc);
+  } catch (err) {
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+});
+
 router.put("/documents/:id", auth, async (req, res) => {
   const { content, name } = req.body;
   const doc = await Document.findById(req.params.id);
