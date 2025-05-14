@@ -39,12 +39,15 @@ function SharedDocuments() {
     if (!window.confirm("Voulez-vous masquer ce document ?")) return;
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/documents/${id}/hide`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/documents/${id}/hide`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const data = await res.json();
       if (!res.ok) {
@@ -67,16 +70,27 @@ function SharedDocuments() {
       ) : (
         <ul className="list-group mt-3">
           {documents.map((doc) => (
-            <li key={doc._id} className="list-group-item d-flex justify-content-between align-items-center">
-              <Link to={`/editor/${doc._id}`} className="text-decoration-none">
-                📝 {doc.title}
+            <li
+              key={doc._id}
+              className="list-group-item d-flex justify-content-between align-items-center"
+            >
+              <Link
+                to={`/documents/${doc._id}`}
+                className="text-decoration-none"
+              >
+                📝 {doc.name}
               </Link>
+
               <div>
                 {doc.owner === user._id ? (
-                  <span className="badge text-bg-primary me-2">Propriétaire</span>
+                  <span className="badge text-bg-primary me-2">
+                    Propriétaire
+                  </span>
                 ) : (
                   <>
-                    <span className="badge text-bg-secondary me-2">Collaborateur</span>
+                    <span className="badge text-bg-secondary me-2">
+                      Collaborateur
+                    </span>
                     <button
                       className="btn btn-sm btn-outline-warning"
                       onClick={() => handleHide(doc._id)}
