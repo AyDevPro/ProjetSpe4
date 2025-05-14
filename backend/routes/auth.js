@@ -26,7 +26,10 @@ router.post("/login", async (req, res) => {
   if (!email || !password)
     return res.status(400).json({ error: "Champs manquants" });
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({
+    $or: [{ email }, { username: email }],
+  });
+
   if (!user) return res.status(401).json({ error: "Identifiants incorrects" });
 
   const isValid = await bcrypt.compare(password, user.password);

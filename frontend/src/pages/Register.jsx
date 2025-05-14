@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 function Register() {
   const [form, setForm] = useState({ email: "", password: "", username: "" });
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -23,6 +25,7 @@ function Register() {
       if (res.ok) {
         toast.success("Inscription réussie ! Vous pouvez vous connecter.");
         setForm({ email: "", password: "", username: "" });
+        navigate("/login");
       } else {
         toast.error(data.error || "Erreur inconnue");
       }
