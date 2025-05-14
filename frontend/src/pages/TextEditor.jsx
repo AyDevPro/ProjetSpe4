@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { io } from "socket.io-client";
 import { useAuth } from "../context/AuthContext";
+import CallManager from "../components/CallManager";
 
 const SAVE_INTERVAL_MS = 2000; // auto-save toutes les 2 secondes
 
@@ -13,11 +14,47 @@ function TextEditor() {
 
   const [content, setContent] = useState("");
   const [status, setStatus] = useState("⏳ Connexion…");
+  const [hasAccess, setHasAccess] = useState(false);
+
   const socketRef = useRef(null);
   const contentRef = useRef(""); // évite des conflits de synchro
 
-  // Initialisation socket
+  // Chargement initial via REST pour contrôle d'accès
   useEffect(() => {
+    const fetchDocument = async () => {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/documents/${documentId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (!res.ok) {
+          if (res.status === 403) {
+            toast.error("Accès refusé à ce document");
+          } else {
+            toast.error("Erreur lors du chargement du document");
+          }
+          return;
+        }
+
+        const doc = await res.json();
+        setHasAccess(true);
+        setContent(doc.content || "");
+        contentRef.current = doc.content || "";
+      } catch (err) {
+        toast.error("Erreur réseau");
+      }
+    };
+
+    fetchDocument();
+  }, [documentId]);
+
+  // Initialisation socket si autorisé
+  useEffect(() => {
+    if (!hasAccess) return;
+
     const socket = io(import.meta.env.VITE_API_URL.replace("/api", ""), {
       transports: ["websocket"],
     });
@@ -42,10 +79,12 @@ function TextEditor() {
     return () => {
       socket.disconnect();
     };
-  }, [documentId]);
+  }, [documentId, hasAccess]);
 
   // Auto-save
   useEffect(() => {
+    if (!hasAccess) return;
+
     const interval = setInterval(() => {
       if (socketRef.current && user) {
         socketRef.current.emit("save-document", {
@@ -57,7 +96,7 @@ function TextEditor() {
     }, SAVE_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [documentId, user]);
+  }, [documentId, user, hasAccess]);
 
   const handleChange = (e) => {
     const newValue = e.target.value;
@@ -68,6 +107,14 @@ function TextEditor() {
       delta: newValue,
     });
   };
+
+  if (!hasAccess) {
+    return (
+      <div className="container mt-5 text-center text-danger">
+        <h4>⛔ Accès non autorisé au document</h4>
+      </div>
+    );
+  }
 
   return (
     <div className="container mt-4">
@@ -81,6 +128,7 @@ function TextEditor() {
         value={content}
         onChange={handleChange}
       />
+      <CallManager documentId={documentId} />
     </div>
   );
 }

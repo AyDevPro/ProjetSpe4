@@ -11,6 +11,7 @@ const adminRoutes = require("./routes/admin");
 const Document = require("./models/Document");
 const User = require("./models/User");
 const bcrypt = require("bcrypt");
+const activeCalls = {};
 
 const app = express();
 const server = http.createServer(app);
@@ -93,6 +94,36 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log("❌ Client déconnecté :", socket.id);
+  });
+
+  socket.on("join-call", ({ documentId }) => {
+    socket.join(`call-${documentId}`);
+    if (!activeCalls[documentId]) activeCalls[documentId] = new Set();
+    activeCalls[documentId].add(socket.id);
+
+    socket.to(`call-${documentId}`).emit("user-joined-call", socket.id);
+
+    socket.on("signal", ({ to, data }) => {
+      io.to(to).emit("signal", { from: socket.id, data });
+    });
+
+    socket.on("disconnect", () => {
+      if (activeCalls[documentId]) {
+        activeCalls[documentId].delete(socket.id);
+        socket.to(`call-${documentId}`).emit("user-left-call", socket.id);
+        if (activeCalls[documentId].size === 0) {
+          delete activeCalls[documentId];
+        }
+      }
+    });
+
+    socket.on("leave-call", () => {
+      socket.leave(`call-${documentId}`);
+      if (activeCalls[documentId]) {
+        activeCalls[documentId].delete(socket.id);
+        socket.to(`call-${documentId}`).emit("user-left-call", socket.id);
+      }
+    });
   });
 });
 
