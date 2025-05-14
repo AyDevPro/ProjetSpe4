@@ -6,9 +6,27 @@ const User = require("../models/User");
 const router = express.Router();
 
 router.get("/me", auth, async (req, res) => {
-  const user = await User.findById(req.user.userId).select("-password");
-  if (!user) return res.status(404).json({ error: "Utilisateur introuvable" });
-  res.json(user);
+  try {
+    let user;
+
+    if (req.user.userId) {
+      user = await User.findById(req.user.userId).select("-password");
+    } else if (req.user.email && req.user.authProvider === "google") {
+      user = await User.findOne({
+        email: req.user.email,
+        authProvider: "google",
+      }).select("-password");
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: "Utilisateur introuvable" });
+    }
+
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
 });
 
 router.put("/me", auth, async (req, res) => {

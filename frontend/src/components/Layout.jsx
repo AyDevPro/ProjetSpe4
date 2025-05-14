@@ -14,7 +14,7 @@ function Layout() {
     <>
       <nav className="navbar navbar-expand-lg navbar-dark bg-dark px-3">
         <Link className="navbar-brand" to="/">
-          MonApp
+          PartageMoi
         </Link>
         <div className="collapse navbar-collapse">
           <ul className="navbar-nav ms-auto align-items-center">

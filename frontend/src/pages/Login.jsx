@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
+import { FaGoogle } from "react-icons/fa";
 
 function Login() {
   const { login } = useAuth();
@@ -90,7 +91,7 @@ function Login() {
             />
           </div>
           <button className="btn btn-primary w-100">Se connecter</button>
-        </form>
+        </form>  
       ) : (
         <form onSubmit={handle2FA}>
           <p>Un code 2FA est requis pour finaliser la connexion.</p>
@@ -105,6 +106,18 @@ function Login() {
           <button className="btn btn-success w-100">Valider le code</button>
         </form>
       )}
+      <div class="auth-links">
+        <p>Connexion avec des apps externes :</p>
+        <a
+          className="btn btn-outline-dark w-100 mt-3 d-flex align-items-center justify-content-center gap-2"
+          href={`${import.meta.env.VITE_API_URL}/auth/google`}
+        >
+          <FaGoogle />
+          Connexion avec Google
+        </a>
+
+        {/* <a href="/auth/facebook">Login with Facebook</a> */}
+      </div>
     </div>
   );
 }

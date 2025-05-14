@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const passport = require('passport');
 
 router.post("/register", async (req, res) => {
   const { email, password, username } = req.body;
@@ -59,5 +60,42 @@ router.post("/login", async (req, res) => {
 
   res.json({ token, email: user.email, username: user.username });
 });
+
+// Route d'authentification Google
+router.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+// Callback après l'authentification Google
+router.get(
+  "/auth/google/callback",
+  passport.authenticate("google", { session: false, failureRedirect: "/login" }),
+  (req, res) => {
+    const user = req.user;
+
+    const payload = {
+      userId: user._id,
+      email: user.email,
+      authProvider: "google",
+    };
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
+
+    // Option 1 - Cookie httpOnly
+    // res.cookie("jwt", token, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === "production",
+    // });
+
+    // localStorage.setItem("token", token);
+
+    // Option 2 - Rediriger vers frontend avec token dans l’URL
+    res.redirect(`http://localhost:5173/auth/success?token=${token}`);
+
+    // Par défaut on renvoie le token
+    // res.json({ token });
+    // res.redirect(`${process.env.FRONTEND_URL}/auth/success/${token}`);
+  }
+);
+
 
 module.exports = router;

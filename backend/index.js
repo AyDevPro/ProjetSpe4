@@ -11,6 +11,8 @@ const adminRoutes = require("./routes/admin");
 const Document = require("./models/Document");
 const User = require("./models/User");
 const bcrypt = require("bcrypt");
+const passport = require("passport");
+require("./config/passport");
 const activeCalls = {};
 
 const app = express();
@@ -25,6 +27,8 @@ const io = new Server(server, {
 
 app.use(cors());
 app.use(express.json({ limit: "5mb" }));
+
+app.use(passport.initialize());
 
 connectDB().then(createAdminIfNotExists);
 

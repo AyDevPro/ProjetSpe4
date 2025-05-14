@@ -44,6 +44,8 @@ router.post("/documents", auth, async (req, res) => {
   const { name, content } = req.body;
   if (!name) return res.status(400).json({ error: "Nom requis" });
 
+  console.log("req.user", req);
+
   const doc = new Document({
     name,
     type: "text",

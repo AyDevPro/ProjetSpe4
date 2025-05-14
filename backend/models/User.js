@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
   twoFactorTempSecret: String,
   role: { type: String, enum: ["user", "admin"], default: "user" },
   blocked: { type: Boolean, default: false },
+  authProvider: String,
 });
 
 module.exports = mongoose.model("User", userSchema);
