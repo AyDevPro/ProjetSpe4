@@ -14,6 +14,7 @@ import TextEditor from "./pages/TextEditor";
 import PrivateRoute from "./components/PrivateRoute";
 import PublicOnlyRoute from "./components/PublicOnlyRoute";
 import SharedDocuments from "./pages/SharedDocuments";
+import AdminDashboard from "./pages/AdminDashboard";
 import { AuthProvider } from "./context/AuthContext";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
@@ -87,6 +88,15 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               element={
                 <PrivateRoute>
                   <SharedDocuments />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute>
+                  <AdminDashboard />
                 </PrivateRoute>
               }
             />

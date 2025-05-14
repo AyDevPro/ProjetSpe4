@@ -33,6 +33,10 @@ router.post("/login", async (req, res) => {
   if (!isValid)
     return res.status(401).json({ error: "Identifiants incorrects" });
 
+  if (user.blocked) {
+    return res.status(403).json({ error: "Compte bloqué, contactez un admin" });
+  }
+
   // Si le 2FA est activé, on demande une vérification supplémentaire
   if (user.twoFactorSecret) {
     return res.json({
@@ -45,7 +49,7 @@ router.post("/login", async (req, res) => {
 
   // Sinon, on envoie le token directement
   const token = jwt.sign(
-    { userId: user._id, email: user.email },
+    { userId: user._id, email: user.email, role: user.role },
     process.env.JWT_SECRET,
     { expiresIn: "2h" }
   );
