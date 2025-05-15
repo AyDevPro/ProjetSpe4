@@ -4,8 +4,7 @@ import { toast } from "react-toastify";
 import { io } from "socket.io-client";
 import { useAuth } from "../context/AuthContext";
 import AudioCallManager from "../components/AudioCallManager";
-import CallParticipantsList from "../components/CallParticipantsList";
-
+import ChatBox from "../components/ChatBox";
 const SAVE_INTERVAL_MS = 2000;
 
 function TextEditor() {
@@ -134,6 +133,7 @@ function TextEditor() {
             <div className="card-body">
               <AudioCallManager documentId={documentId} />
               <hr />
+              <ChatBox documentId={documentId} />
             </div>
           </div>
         </div>

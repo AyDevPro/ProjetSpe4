@@ -175,6 +175,19 @@ io.on("connection", (socket) => {
       : [];
     socket.emit("current-participants", list);
   });
+
+  socket.on("send-chat-message", ({ documentId, username, message }) => {
+    io.to(documentId).emit("receive-chat-message", {
+      username,
+      message,
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  socket.on("join-chat", (documentId) => {
+    socket.join(documentId);
+    console.log(`📄 ${socket.id} a rejoint le chat du document ${documentId}`);
+  });
 });
 
 const PORT = process.env.PORT || 3001;
