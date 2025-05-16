@@ -1,117 +1,100 @@
-# ProjetSpe4
+# 📚 Wiki Collab App – Guide de démarrage
 
-# 📚 Wiki Collab App
-
-Application collaborative de création de documents en temps réel (type wiki), avec gestion des comptes, édition à plusieurs, et API sécurisée avec JWT.
+Application collaborative de type wiki permettant la création de documents en temps réel, avec édition simultanée, gestion des utilisateurs, authentification sécurisée (JWT), et intégration de services via Docker.
 
 ---
 
-## 🚀 Lancement du projet
+## ✅ Pré-requis
 
-### 1. Copier le fichier `.env.example`
+Avant de lancer le projet, assure-toi d’avoir les éléments suivants installés sur ta machine :
 
-Avant de lancer le projet, crée un fichier `.env` à la **racine du projet** :
+* **Docker** et **Docker Compose**
+* **Node.js** et **npm** (si tu souhaites utiliser les scripts `npm run` manuellement)
+
+---
+
+## ⚙️ Configuration initiale
+
+### 1. Création du fichier `.env`
+
+Commence par copier le fichier d’exemple fourni :
 
 ```bash
 cp .env.example .env
 ```
 
-Puis remplace la valeur de `JWT_SECRET` par une clé secrète personnalisée :
+Puis personnalise les variables sensibles dans le fichier `.env` :
 
 ```env
 JWT_SECRET=superSecretChiffre123
+GOOGLE_CLIENT_ID=XXX
+GOOGLE_CLIENT_SECRET=XXX
+API_URL=http://localhost:3001/
+FRONTEND_URL=http://localhost:5173/
+ADMIN_EMAIL=admin@email.fr
+ADMIN_PASSWORD=admin
 ```
+
+🛡️ **Important** : remplace `XXX` par tes propres identifiants Google pour activer l’authentification OAuth2.
 
 ---
 
-### 2. Démarrer le projet (avec Docker)
+## 🚀 Lancer le projet avec Docker
+
+Lance tous les services (MongoDB, backend, frontend) en une seule commande :
 
 ```bash
 npm run dev:all
 ```
 
-> Démarre MongoDB, le backend Express avec hot reload (Nodemon), et le frontend Vite avec live reload.
+Cela démarre :
 
----
-
-## ⚙️ Commandes utiles
-
-### Nettoyer tous les conteneurs, volumes et fichiers temporaires
-
-```bash
-npm run clean
-```
-
-> Équivaut à `docker-compose down -v --remove-orphans`
-
----
-
-### Relancer tout proprement (nettoyage + build)
-
-```bash
-npm run restart
-```
-
-> Stoppe tous les services et redémarre depuis zéro avec `--build`
-
----
-
-### Voir les logs en direct
-
-```bash
-npm run logs
-```
-
-> Affiche les logs combinés de tous les services (`docker-compose logs -f`)
-
----
-
-### Arrêter tous les services
-
-```bash
-npm run down
-```
-
-> Arrête proprement les conteneurs (`docker-compose down`)
-
----
-
-## 🌐 Accès
-
-- **Frontend React (Vite)** : [http://localhost:5173](http://localhost:5173)
-- **Backend API (Express)** : [http://localhost:3001/api](http://localhost:3001/api)
-
-> Exemple : `GET http://localhost:3001/api/hello`
+* MongoDB (base de données)
+* Le backend Express avec hot reload (Nodemon)
+* Le frontend React avec Vite et live reload
 
 ---
 
 ## 📦 Structure des services
 
-- `frontend` : Application React (Vite) avec hot reload
-- `backend` : API Express avec Nodemon
-- `mongo` : Base de données MongoDB
+* `frontend` : Application React (Vite)
+* `backend` : API Node.js (Express + JWT)
+* `mongo` : Base de données MongoDB
+
+---
+
+## 🌐 Accès aux services
+
+* **Frontend** : [http://localhost:5173](http://localhost:5173)
+* **API Backend** : [http://localhost:3001/api](http://localhost:3001/api)
+
+Par exemple : `GET http://localhost:3001/api/hello`
+
+---
+
+## 🛠️ Commandes utiles
+
+| Action                          | Commande          | Description                                                                              |
+| ------------------------------- | ----------------- | ---------------------------------------------------------------------------------------- |
+| Nettoyer les conteneurs/volumes | `npm run clean`   | Supprime les volumes et orphelins (équivaut à `docker-compose down -v --remove-orphans`) |
+| Redémarrer proprement           | `npm run restart` | Nettoie puis relance avec `--build`                                                      |
+| Voir les logs                   | `npm run logs`    | Affiche les logs combinés de tous les services                                           |
+| Arrêter les services            | `npm run down`    | Arrête proprement tous les conteneurs Docker                                             |
 
 ---
 
 ## 🔐 Sécurité
 
-Ne jamais exposer votre `JWT_SECRET` en clair. Ne versionnez jamais votre fichier `.env`.
-Vous pouvez fournir un fichier `.env.example` dans le dépôt pour faciliter l'onboarding.
+* **Ne jamais versionner** le fichier `.env` (gardez-le localement).
+* Gardez votre `JWT_SECRET` et vos clés Google confidentielles.
+* Partagez uniquement le fichier `.env.example` pour faciliter l’intégration d’autres développeurs.
 
----
+## 👨‍💻 Développeurs
 
-## 📂 Fichiers importants
+Ci-dessous les noms des développeurs ayant contribué au projet :
 
-- `.env.example` → modèle de configuration
-- `docker-compose.yml` → orchestration complète
-- `/frontend` → frontend React
-- `/backend` → backend Express (API + JWT + MongoDB)
+* Nom 1 : BOSCUS Pierre
+* Nom 2 : ALI Ben Yamine
+* Nom 3 : FANGET Matthieu
+* Nom 4 : SURRE Aymeric
 
----
-
-## 📌 Remarques
-
-- Le fichier `version:` dans `docker-compose.yml` a été supprimé (obsolète dans Docker Compose V2)
-- Le fichier `.env` à la racine est automatiquement lu par Docker Compose
-
----
