@@ -89,6 +89,9 @@ io.on("connection", (socket) => {
     socket.join(documentId);
     console.log(`📄 ${socket.id} a rejoint le document ${documentId}`);
 
+    if (!mongoose.Types.ObjectId.isValid(documentId)) {
+      return res.status(400).json({ error: "ID de document invalide" });
+    }
     const doc = await Document.findById(documentId);
 
     if (doc) {
@@ -103,6 +106,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("save-document", async ({ documentId, content, userId }) => {
+    if (!mongoose.Types.ObjectId.isValid(documentId)) {
+      return res.status(400).json({ error: "ID de document invalide" });
+    }
     await Document.findByIdAndUpdate(documentId, {
       content,
       lastModified: new Date(),
@@ -177,6 +183,10 @@ io.on("connection", (socket) => {
   });
 
   socket.on("send-chat-message", ({ documentId, username, message }) => {
+    if (!username || !message || message.length > 2000) {
+      return;
+    }
+
     io.to(documentId).emit("receive-chat-message", {
       username,
       message,

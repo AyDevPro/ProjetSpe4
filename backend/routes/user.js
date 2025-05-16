@@ -2,6 +2,7 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const auth = require("../middlewares/auth");
 const User = require("../models/User");
+const { default: mongoose } = require("mongoose");
 
 const router = express.Router();
 
@@ -10,6 +11,9 @@ router.get("/me", auth, async (req, res) => {
     let user;
 
     if (req.user.userId) {
+      if (!mongoose.Types.ObjectId.isValid(req.user.userId)) {
+        return res.status(400).json({ error: "ID d'utilisateur invalide" });
+      }
       user = await User.findById(req.user.userId).select("-password");
     } else if (req.user.email && req.user.authProvider === "google") {
       user = await User.findOne({
@@ -67,6 +71,9 @@ router.put("/me/password", auth, async (req, res) => {
       .json({ error: "Mot de passe trop court (min. 6 caractères)" });
 
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.user.userId)) {
+      return res.status(400).json({ error: "ID d'utilisateur invalide" });
+    }
     const user = await User.findById(req.user.userId);
     if (!user)
       return res.status(404).json({ error: "Utilisateur introuvable" });
@@ -88,10 +95,15 @@ router.put("/me/password", auth, async (req, res) => {
 // Récupérer tous les utilisateurs (pour partage, etc.)
 router.get("/users", auth, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.user.userId)) {
+      return res.status(400).json({ error: "ID d'utilisateur invalide" });
+    }
     const users = await User.find({}, "username email _id");
     res.json(users);
   } catch (err) {
-    res.status(500).json({ error: "Erreur lors de la récupération des utilisateurs" });
+    res
+      .status(500)
+      .json({ error: "Erreur lors de la récupération des utilisateurs" });
   }
 });
 

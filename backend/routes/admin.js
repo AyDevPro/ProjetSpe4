@@ -34,6 +34,9 @@ router.post("/admin/create-user", auth, isAdmin, async (req, res) => {
 // 🟡 Bloquer un utilisateur
 router.post("/admin/block/:id", auth, isAdmin, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: "ID d'utilisateur invalide" });
+    }
     const user = await User.findById(req.params.id);
     if (!user)
       return res.status(404).json({ error: "Utilisateur introuvable" });
@@ -49,6 +52,9 @@ router.post("/admin/block/:id", auth, isAdmin, async (req, res) => {
 // 🟢 Débloquer un utilisateur
 router.post("/admin/unblock/:id", auth, isAdmin, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: "ID d'utilisateur invalide" });
+    }
     const user = await User.findById(req.params.id);
     if (!user)
       return res.status(404).json({ error: "Utilisateur introuvable" });

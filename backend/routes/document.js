@@ -4,6 +4,15 @@ const Document = require("../models/Document");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const mongoose = require("mongoose");
+
+const escapeHtml = (unsafe) =>
+  unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
 const router = express.Router();
 
@@ -17,7 +26,16 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + "-" + file.originalname);
   },
 });
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    const allowedMimeTypes = ["application/pdf", "image/jpeg", "image/png"];
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      return cb(new Error("Type de fichier non autorisé"), false);
+    }
+    cb(null, true);
+  },
+});
 
 router.get("/documents", auth, async (req, res) => {
   const showHidden = req.query.showHidden === "true";
@@ -44,8 +62,6 @@ router.post("/documents", auth, async (req, res) => {
   const { name, content } = req.body;
   if (!name) return res.status(400).json({ error: "Nom requis" });
 
-  console.log("req.user", req);
-
   const doc = new Document({
     name,
     type: "text",
@@ -66,9 +82,9 @@ router.post(
     if (!req.file) return res.status(400).json({ error: "Fichier manquant" });
 
     const doc = new Document({
-      name: req.file.originalname,
-      type: "file",
-      fileUrl: `/uploads/${req.file.filename}`,
+      name: escapeHtml(name),
+      type: "text",
+      content: escapeHtml(content || ""),
       owner: req.user.userId,
       lastModifiedBy: req.user.userId,
     });
@@ -80,6 +96,10 @@ router.post(
 
 router.get("/documents/:id", auth, async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: "ID de document invalide" });
+    }
+
     const doc = await Document.findById(req.params.id);
     if (!doc) return res.status(404).json({ error: "Document introuvable" });
 
@@ -105,6 +125,9 @@ router.get("/documents/:id", auth, async (req, res) => {
 
 router.put("/documents/:id", auth, async (req, res) => {
   const { content, name } = req.body;
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ error: "ID de document invalide" });
+  }
   const doc = await Document.findById(req.params.id);
   if (!doc) return res.status(404).json({ error: "Document introuvable" });
 
@@ -114,8 +137,8 @@ router.put("/documents/:id", auth, async (req, res) => {
 
   if (!isAuthorized) return res.status(403).json({ error: "Accès interdit" });
 
-  if (name) doc.name = name;
-  if (content !== undefined) doc.content = content;
+  if (name) doc.name = escapeHtml(name);
+  if (content !== undefined) doc.content = escapeHtml(content);
   doc.lastModified = new Date();
   doc.lastModifiedBy = req.user.userId;
 
@@ -124,6 +147,9 @@ router.put("/documents/:id", auth, async (req, res) => {
 });
 
 router.delete("/documents/:id", auth, async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ error: "ID de document invalide" });
+  }
   const doc = await Document.findById(req.params.id);
   if (!doc) return res.status(404).json({ error: "Document introuvable" });
 
@@ -143,6 +169,13 @@ router.delete(
   "/documents/:id/collaborators/:userId",
   auth,
   async (req, res) => {
+    if (
+      !mongoose.Types.ObjectId.isValid(req.params.id) ||
+      !mongoose.Types.ObjectId.isValid(req.params.userId)
+    ) {
+      return res.status(400).json({ error: "ID invalide" });
+    }
+
     const doc = await Document.findById(req.params.id);
     if (!doc) return res.status(404).json({ error: "Document introuvable" });
 
@@ -158,6 +191,9 @@ router.delete(
 );
 
 router.delete("/documents/:id/hide", auth, async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ error: "ID de document invalide" });
+  }
   const doc = await Document.findById(req.params.id);
   if (!doc) return res.status(404).json({ error: "Document introuvable" });
 
@@ -174,6 +210,9 @@ router.delete("/documents/:id/hide", auth, async (req, res) => {
 
 router.post("/documents/:id/invite", auth, async (req, res) => {
   const { email } = req.body;
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ error: "ID de document invalide" });
+  }
   const doc = await Document.findById(req.params.id);
   const User = require("../models/User");
   const invited = await User.findOne({ email });

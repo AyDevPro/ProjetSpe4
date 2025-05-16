@@ -4,7 +4,7 @@ const qrcode = require("qrcode");
 const jwt = require("jsonwebtoken");
 const auth = require("../middlewares/auth");
 const User = require("../models/User");
-
+const mongoose = require("mongoose");
 const router = express.Router();
 
 router.post("/generate", auth, async (req, res) => {
@@ -13,6 +13,9 @@ router.post("/generate", auth, async (req, res) => {
   });
 
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.user.userId)) {
+      return res.status(400).json({ error: "ID d'utilisateur invalide" });
+    }
     const user = await User.findById(req.user.userId);
     user.twoFactorTempSecret = secret.base32;
     await user.save();
@@ -28,6 +31,9 @@ router.post("/generate", auth, async (req, res) => {
 
 router.post("/verify", auth, async (req, res) => {
   const { token } = req.body;
+  if (!mongoose.Types.ObjectId.isValid(req.user.userId)) {
+    return res.status(400).json({ error: "ID d'utilisateur invalide" });
+  }
   const user = await User.findById(req.user.userId);
 
   const verified = speakeasy.totp.verify({
@@ -48,6 +54,9 @@ router.post("/verify", auth, async (req, res) => {
 
 router.post("/validate", async (req, res) => {
   const { userId, token } = req.body;
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json({ error: "ID d'utilisateur invalide" });
+  }
   const user = await User.findById(userId);
 
   if (!user || !user.twoFactorSecret)
@@ -74,6 +83,9 @@ router.post("/validate", async (req, res) => {
 
 // 🔓 Désactivation du 2FA
 router.post("/disable", auth, async (req, res) => {
+  if (!mongoose.Types.ObjectId.isValid(req.user.userId)) {
+    return res.status(400).json({ error: "ID d'utilisateur invalide" });
+  }
   const user = await User.findById(req.user.userId);
   if (!user) return res.status(404).json({ error: "Utilisateur introuvable" });
 
