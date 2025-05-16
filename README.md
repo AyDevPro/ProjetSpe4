@@ -93,8 +93,8 @@ Par exemple : `GET http://localhost:3001/api/hello`
 
 Ci-dessous les noms des développeurs ayant contribué au projet :
 
-* Nom 1 : BOSCUS Pierre
-* Nom 2 : ALI Ben Yamine
-* Nom 3 : FANGET Matthieu
-* Nom 4 : SURRE Aymeric
+* BOSCUS Pierre
+* ALI Ben Yamine
+* FANGET Matthieu
+* SURRE Aymeric
 
